@@ -124,30 +124,27 @@ subjects:
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: {{ include "cert-manager-webhook-oci.fullname" . }}:flow-lister
-  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
-      - ""
+      - "flowcontrol.apiserver.k8s.io"
     resources:
       - "flowschemas"
-    {{- with .Values.ociProfileSecretNames }}
-    resourceNames:
-    {{ toYaml . | indent 4 }}
-    {{- end }}
+      - "prioritylevelconfigurations"
     verbs:
       - "list"
+      - "watch"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: {{ include "cert-manager-webhook-oci.fullname" . }}:flow-lister
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: {{ include "cert-manager-webhook-oci.fullname" . }}:flow-lister
 subjects:
   - apiGroup: ""
