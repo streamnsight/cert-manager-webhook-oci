@@ -2,6 +2,15 @@
 
 This solver can be used when you want to use cert-manager with Oracle Cloud Infrastructure as a DNS provider.
 
+## Changes from upstream
+
+The [original code](https://gitlab.com/dn13/cert-manager-webhook-oci) is not under active maintenance, these are some
+minor fixes to make it compatible with recent Kubernetes and Cert Manager:
+
+* [Fixes by Tyler Lawson](https://gitlab.com/lawsontyler/cert-manager-webhook-oci) to support newer OCI APIs
+* Fixes to RBAC to support newer versions of Kubernetes
+* GitHub actions to build the container image and Helm repo.
+
 ## Requirements
 -   [go](https://golang.org/) >= 1.13.0 *only for development*
 -   [helm](https://helm.sh/) >= v3.0.0
@@ -18,7 +27,7 @@ Follow the [instructions](https://cert-manager.io/docs/installation/) using the 
 
 #### Using public helm chart
 ```bash
-helm repo add cert-manager-webhook-oci https://dn13.gitlab.io/cert-manager-webhook-oci
+helm repo add cert-manager-webhook-oci https://hageltech.github.io/cert-manager-webhook-oci
 helm install --namespace cert-manager cert-manager-webhook-oci cert-manager-webhook-oci/cert-manager-webhook-oci
 ```
 
