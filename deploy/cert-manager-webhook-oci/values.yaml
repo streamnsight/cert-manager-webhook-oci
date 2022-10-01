@@ -4,15 +4,15 @@
 # solve the DNS01 challenge.
 # This group name should be **unique**, hence using your own company's domain
 # here is recommended.
-groupName: acme.d-n.be
+groupName: acme.oci.dns
 
 certManager:
   namespace: cert-manager
   serviceAccountName: cert-manager
 
 image:
-  repository: ghcr.io/hageltech/cert-manager-webhook-oci
-  tag: 1.1.1
+  repository: sjc.ocir.io/bigdatadatasciencelarge/cert-manager-webhook-oci
+  tag: 1.2.0
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -37,6 +37,8 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
+replicaCount: 1
+
 nodeSelector: {}
 
 tolerations: []
@@ -44,4 +46,4 @@ tolerations: []
 affinity: {}
 
 imagePullSecrets:
-  - name: regcred
+  # - name: regcred

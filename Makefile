@@ -15,7 +15,5 @@ build:
 rendered-manifest.yaml:
 	helm template \
 	    cert-manager-webhook-oci \
-        --set image.repository=$(IMAGE_NAME) \
-        --set image.tag=$(IMAGE_TAG) \
 		--namespace cert-manager \
         deploy/cert-manager-webhook-oci > "$(OUT)/rendered-manifest.yaml"
