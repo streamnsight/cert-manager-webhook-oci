@@ -220,49 +220,42 @@ func (c *ociDNSProviderSolver) ociDNSClient(cfg *ociDNSProviderConfig, namespace
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	tenancy, err := stringFromSecretData(&sec.Data, "tenancy")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get tenancy from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get tenancy from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	user, err := stringFromSecretData(&sec.Data, "user")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get user from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get user from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	region, err := stringFromSecretData(&sec.Data, "region")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get region from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get region from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	fingerprint, err := stringFromSecretData(&sec.Data, "fingerprint")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get fingerprint from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get fingerprint from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	privateKey, err := stringFromSecretData(&sec.Data, "privateKey")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get privateKey from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get privateKey from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	privateKeyPassphrase, err := stringFromSecretData(&sec.Data, "privateKeyPassphrase")
 	if err != nil {
 		userConfigIsValid = false
 		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get privateKeyPassphrase from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
-		// return nil, fmt.Errorf("unable to get privateKeyPassphrase from secret `%s/%s`; %v", secretName, namespace, err)
 	}
 
 	var configProvider common.ConfigurationProvider
