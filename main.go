@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"
@@ -157,8 +157,8 @@ func patchRequest(cfg *ociDNSProviderConfig, ch *v1alpha1.ChallengeRequest, oper
 			Items: []dns.RecordOperation{
 				dns.RecordOperation{
 					Domain:    &domain,
-					Rtype:     &rtype,
 					Rdata:     &ch.Key,
+					Rtype:     &rtype,
 					Ttl:       &ttl,
 					Operation: operation,
 				},
@@ -206,8 +206,9 @@ func loadConfig(cfgJSON *extapi.JSON) (ociDNSProviderConfig, error) {
 // ociDNSClient is a helper function to initialize a DNS client from the oci-sdk
 func (c *ociDNSProviderSolver) ociDNSClient(cfg *ociDNSProviderConfig, namespace string) (*dns.DnsClient, error) {
 	secretName := cfg.OCIProfileSecretRef
+	ctx := context.Background()
 	klog.V(6).Infof("Trying to load oci profile from secret `%s` in namespace `%s`", secretName, namespace)
-	sec, err := c.client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	sec, err := c.client.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get secret `%s/%s`; %v", secretName, namespace, err)
 	}
