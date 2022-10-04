@@ -104,6 +104,7 @@ spec:
     - example.com
   issuerRef:
     name: letsencrypt-staging
+    kind: ClusterIssuer
   secretName: example-cert
 ```
 
