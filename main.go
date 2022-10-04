@@ -147,7 +147,7 @@ func (c *ociDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 
 func patchRequest(cfg *ociDNSProviderConfig, ch *v1alpha1.ChallengeRequest, operation dns.RecordOperationOperationEnum) dns.PatchZoneRecordsRequest {
 	domain := strings.TrimSuffix(ch.ResolvedFQDN, ".")
-	rtype := "txt"
+	rtype := "TXT"
 	ttl := 60
 
 	return dns.PatchZoneRecordsRequest{

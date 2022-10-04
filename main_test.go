@@ -25,7 +25,6 @@ func TestRunsSuite(t *testing.T) {
 		dns.SetResolvedFQDN(fqdn),
 		dns.SetAllowAmbientCredentials(false),
 		dns.SetManifestPath("testdata/oci"),
-		dns.SetBinariesPath("kubebuilder/bin"),
 	)
 
 	fixture.RunConformance(t)
