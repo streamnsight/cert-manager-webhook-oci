@@ -1,9 +1,9 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"testing"
-	"math/rand"
 
 	"github.com/jetstack/cert-manager/test/acme/dns"
 )
@@ -25,7 +25,6 @@ func TestRunsSuite(t *testing.T) {
 		dns.SetResolvedFQDN(fqdn),
 		dns.SetAllowAmbientCredentials(false),
 		dns.SetManifestPath("testdata/oci"),
-		dns.SetBinariesPath("kubebuilder/bin"),
 	)
 
 	fixture.RunConformance(t)

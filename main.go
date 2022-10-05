@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -18,8 +18,9 @@ import (
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"
 
-	"github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/dns"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/auth"
+	"github.com/oracle/oci-go-sdk/v65/dns"
 )
 
 // GroupName is used to identify the company or business unit that created this webhook.
@@ -146,7 +147,7 @@ func (c *ociDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 
 func patchRequest(cfg *ociDNSProviderConfig, ch *v1alpha1.ChallengeRequest, operation dns.RecordOperationOperationEnum) dns.PatchZoneRecordsRequest {
 	domain := strings.TrimSuffix(ch.ResolvedFQDN, ".")
-	rtype := "txt"
+	rtype := "TXT"
 	ttl := 60
 
 	return dns.PatchZoneRecordsRequest{
@@ -207,42 +208,67 @@ func loadConfig(cfgJSON *extapi.JSON) (ociDNSProviderConfig, error) {
 func (c *ociDNSProviderSolver) ociDNSClient(cfg *ociDNSProviderConfig, namespace string) (*dns.DnsClient, error) {
 	secretName := cfg.OCIProfileSecretRef
 	klog.V(6).Infof("Trying to load oci profile from secret `%s` in namespace `%s`", secretName, namespace)
-	sec, err := c.client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	ctx := context.Background()
+
+	// Need to handle Instance Principal case
+	var userConfigIsValid bool
+	var userConfigErrorMsg string
+	userConfigIsValid = true
+	userConfigErrorMsg = ""
+	sec, err := c.client.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	tenancy, err := stringFromSecretData(&sec.Data, "tenancy")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get tenancy from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get tenancy from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	user, err := stringFromSecretData(&sec.Data, "user")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get user from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get user from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	region, err := stringFromSecretData(&sec.Data, "region")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get region from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get region from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	fingerprint, err := stringFromSecretData(&sec.Data, "fingerprint")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get fingerprint from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get fingerprint from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	privateKey, err := stringFromSecretData(&sec.Data, "privateKey")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get privateKey from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get privateKey from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
 	privateKeyPassphrase, err := stringFromSecretData(&sec.Data, "privateKeyPassphrase")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get privateKeyPassphrase from secret `%s/%s`; %v", secretName, namespace, err)
+		userConfigIsValid = false
+		userConfigErrorMsg = fmt.Sprintf("%s\nunable to get privateKeyPassphrase from secret `%s/%s`; %v", userConfigErrorMsg, secretName, namespace, err)
 	}
 
-	configProvider := common.NewRawConfigurationProvider(tenancy, user, region, fingerprint, privateKey, &privateKeyPassphrase)
+	var configProvider common.ConfigurationProvider
+	if userConfigIsValid {
+		configProvider = common.NewRawConfigurationProvider(tenancy, user, region, fingerprint, privateKey, &privateKeyPassphrase)
+	} else {
+		klog.V(6).Infof("user config not valid: %s", userConfigErrorMsg)
+		klog.V(6).Infof("trying Instance Principal auth")
+		configProvider, err = auth.InstancePrincipalConfigurationProvider()
+		if err != nil {
+			return nil, fmt.Errorf("unable to authenticate with Instance Principal; %v", err)
+		}
+	}
 
 	dnsClient, err := dns.NewDnsClientWithConfigurationProvider(configProvider)
 	if err != nil {
