@@ -12,7 +12,7 @@ certManager:
 
 image:
   repository: sjc.ocir.io/bigdatadatasciencelarge/cert-manager-webhook-oci
-  tag: 1.2.0
+  tag: 1.6.1
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -45,5 +45,4 @@ tolerations: []
 
 affinity: {}
 
-imagePullSecrets:
-  # - name: regcred
+imagePullSecrets: []
