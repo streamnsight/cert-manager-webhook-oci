@@ -4,18 +4,19 @@ This solver can be used when you want to use cert-manager with Oracle Cloud Infr
 
 ## Changes from upstream
 
-The [original code](https://gitlab.com/dn13/cert-manager-webhook-oci) is not under active maintenance, these are some
-minor fixes to make it compatible with recent Kubernetes and Cert Manager:
+The [original code](https://gitlab.com/dn13/cert-manager-webhook-oci) is not under active maintenance, these are some minor fixes to make it compatible with recent Kubernetes and Cert Manager:
 
 * [Fixes by Tyler Lawson](https://gitlab.com/lawsontyler/cert-manager-webhook-oci) to support newer OCI APIs
 * Fixes to RBAC to support newer versions of Kubernetes
 * GitHub actions to build the container image and Helm repo.
+* Update to v65 OCI SDK, and implement Instance Principal auth
 
 ## Requirements
--   [go](https://golang.org/) >= 1.13.0 *only for development*
--   [helm](https://helm.sh/) >= v3.0.0
--   [kubernetes](https://kubernetes.io/) >= v1.14.0
--   [cert-manager](https://cert-manager.io/) >= 1.0
+
+- [go](https://golang.org/) >= 1.13.0 *only for development*
+- [helm](https://helm.sh/) >= v3.0.0
+- [kubernetes](https://kubernetes.io/) >= v1.14.0
+- [cert-manager](https://cert-manager.io/) >= 1.0
 
 ## Installation
 
@@ -25,9 +26,10 @@ Follow the [instructions](https://cert-manager.io/docs/installation/) using the 
 
 ### Webhook
 
-#### Using public helm chart
+#### Using Public Helm Chart
+
 ```bash
-helm repo add cert-manager-webhook-oci https://hageltech.github.io/cert-manager-webhook-oci
+helm repo add cert-manager-webhook-oci https://streamnsight.github.io/cert-manager-webhook-oci
 helm install --namespace cert-manager cert-manager-webhook-oci cert-manager-webhook-oci/cert-manager-webhook-oci
 ```
 
@@ -36,12 +38,20 @@ helm install --namespace cert-manager cert-manager-webhook-oci cert-manager-webh
 ```bash
 helm install --namespace cert-manager cert-manager-webhook-oci deploy/cert-manager-webhook-oci
 ```
+
 **Note**: The kubernetes resources used to install the Webhook should be deployed within the same namespace as the cert-manager.
 
 To uninstall the webhook run
 ```bash
 helm uninstall --namespace cert-manager cert-manager-webhook-oci
 ```
+
+#### Install Rendered Manifest
+
+The chart can also be installed in one call using:
+
+```bash
+kubectl apply -f deploy/rendered-manifest.yaml
 
 ## Issuer
 
