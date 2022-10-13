@@ -26,17 +26,24 @@ Follow the [instructions](https://cert-manager.io/docs/installation/) using the 
 
 ### Webhook
 
-#### Using Public Helm Chart
+<!-- #### Using Public Helm Chart
 
 ```bash
 helm repo add cert-manager-webhook-oci https://streamnsight.github.io/cert-manager-webhook-oci
 helm install --namespace cert-manager cert-manager-webhook-oci cert-manager-webhook-oci/cert-manager-webhook-oci
-```
+``` -->
 
 #### From local checkout
 
+Build and publish the container image to your registry
+
+Install:
+
 ```bash
-helm install --namespace cert-manager cert-manager-webhook-oci deploy/cert-manager-webhook-oci
+helm install --namespace cert-manager \
+--values image.repository=<your repository> \
+--values image.tag=<your tag> \
+ cert-manager-webhook-oci deploy/cert-manager-webhook-oci
 ```
 
 **Note**: The kubernetes resources used to install the Webhook should be deployed within the same namespace as the cert-manager.
