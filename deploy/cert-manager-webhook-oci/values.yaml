@@ -11,8 +11,8 @@ certManager:
   serviceAccountName: cert-manager
 
 image:
-  repository: sjc.ocir.io/bigdatadatasciencelarge/cert-manager-webhook-oci
-  tag: 1.6.1
+  repository: 
+  tag: ol7.9-cm1.6.1
   pullPolicy: IfNotPresent
 
 nameOverride: ""
