@@ -208,7 +208,7 @@ spec:
       serviceAccountName: cert-manager-webhook-oci
       containers:
         - name: cert-manager-webhook-oci
-          image: "sjc.ocir.io/bigdatadatasciencelarge/cert-manager-webhook-oci:ol7.9-cm1.6.1"
+          image: 
           imagePullPolicy: IfNotPresent
           args:
             - --tls-cert-file=/tls/tls.crt
