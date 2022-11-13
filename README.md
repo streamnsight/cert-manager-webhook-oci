@@ -53,13 +53,6 @@ To uninstall the webhook run
 helm uninstall --namespace cert-manager cert-manager-webhook-oci
 ```
 
-#### Install Rendered Manifest
-
-The chart can also be installed in one call using:
-
-```bash
-kubectl apply -f deploy/rendered-manifest.yaml
-
 ## Issuer
 
 Create a `ClusterIssuer` or `Issuer` resource as following:
