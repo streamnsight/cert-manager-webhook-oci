@@ -26,8 +26,9 @@ build: ## build the docker image
 .PHONY: manifest
 manifest: ## create the single manifest YAML distribution
 	VERSION=$(shell cat deploy/cert-manager-webhook-oci/Chart.yaml | grep version | awk -F":" '{print $2}' | tr -d 'version:" '); \
-	mkdir -p $(OUT)/v$${VERSION}; \
+	APP_VERSION=$(shell cat deploy/cert-manager-webhook-oci/Chart.yaml | grep appVersion | awk -F":" '{print $2}' | tr -d 'appVersion:" '); \
+	mkdir -p $(OUT)/v$${APP_VERSION}-$${VERSION}; \
 	helm template \
 	    cert-manager-webhook-oci \
 		--namespace cert-manager \
-        deploy/cert-manager-webhook-oci > "$(OUT)/v$${VERSION}/cert-manager-webhook-oci.yaml"
+        deploy/cert-manager-webhook-oci > "$(OUT)/v$${APP_VERSION}-$${VERSION}/cert-manager-webhook-oci.yaml"

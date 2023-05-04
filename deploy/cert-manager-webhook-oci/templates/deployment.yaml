@@ -31,6 +31,14 @@ spec:
           env:
             - name: GROUP_NAME
               value: {{ .Values.groupName | quote }}
+            {{ if .Values.useWorkloadIdentity }}
+            - name: OCI_USE_WORKLOAD_IDENTITY
+              value: "true"
+            - name: OCI_RESOURCE_PRINCIPAL_VERSION
+              value: "2.2"
+            - name: OCI_RESOURCE_PRINCIPAL_REGION
+              value: {{ .Values.region }}            
+            {{ end }}
           ports:
             - name: https
               containerPort: 443

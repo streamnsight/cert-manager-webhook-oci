@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/jetstack/cert-manager v1.6.1
-	github.com/oracle/oci-go-sdk/v65 v65.22.0
+	github.com/oracle/oci-go-sdk/v65 v65.37.0
 	k8s.io/apiextensions-apiserver v0.22.2
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3
@@ -77,7 +77,7 @@ require (
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect

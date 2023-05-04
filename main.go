@@ -259,7 +259,12 @@ func (c *ociDNSProviderSolver) ociDNSClient(cfg *ociDNSProviderConfig, namespace
 	}
 
 	var configProvider common.ConfigurationProvider
-	if userConfigIsValid {
+	if os.Getenv("OCI_USE_WORKLOAD_IDENTITY") == "true" {
+		configProvider, err = auth.OkeWorkloadIdentityConfigurationProvider()
+		if err != nil {
+			return nil, fmt.Errorf("unable to authenticate with Workload Identity; %v", err)
+		}
+	} else if userConfigIsValid {
 		configProvider = common.NewRawConfigurationProvider(tenancy, user, region, fingerprint, privateKey, &privateKeyPassphrase)
 	} else {
 		klog.V(6).Infof("user config not valid: %s", userConfigErrorMsg)
