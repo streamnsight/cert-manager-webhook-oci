@@ -41,8 +41,8 @@ Install:
 
 ```bash
 helm install --namespace cert-manager \
---values image.repository=<your repository> \
---values image.tag=<your tag> \
+--values image.repository=ghcr.io/giovannicandido/cert-manager-webhook-oci \
+--values image.tag=build-pipeline \
  cert-manager-webhook-oci deploy/cert-manager-webhook-oci
 ```
 
@@ -76,7 +76,7 @@ spec:
     solvers:
       - dns01:
           webhook:
-            groupName: acme.d-n.be
+            groupName: acme.kugelbit.com
             solverName: oci
             config:
               ociProfileSecretName: oci-profile
