@@ -42,8 +42,9 @@ Install:
 
 ```bash
 helm install --namespace cert-manager \
---set image.repository=<your repository> \
---set image.tag=<your tag> \
+--set image.repository=ghcr.io/giovannicandido/cert-manager-webhook-oci \
+--set image.tag=build-pipeline \
+--set groupName=acme.youcompany.com \
  cert-manager-webhook-oci deploy/cert-manager-webhook-oci
 ```
 
@@ -84,7 +85,7 @@ spec:
     solvers:
       - dns01:
           webhook:
-            groupName: acme.d-n.be
+            groupName: acme.yourcompany.com
             solverName: oci
             config:
               ociProfileSecretName: oci-profile
@@ -198,3 +199,5 @@ You can then run the test suite with:
 # then run the tests
 TEST_ZONE_NAME=example.com. make verify
 ```
+
+
