@@ -10,6 +10,7 @@ The [original code](https://gitlab.com/dn13/cert-manager-webhook-oci) is not und
 * Fixes to RBAC to support newer versions of Kubernetes
 * GitHub actions to build the container image and Helm repo.
 * Update to v65 OCI SDK, and implement Instance Principal auth
+* Implement Workload Identity auth method for OKE Enhanced clusters
 
 ## Requirements
 
@@ -41,9 +42,17 @@ Install:
 
 ```bash
 helm install --namespace cert-manager \
---values image.repository=<your repository> \
---values image.tag=<your tag> \
+--set image.repository=ghcr.io/giovannicandido/cert-manager-webhook-oci \
+--set image.tag=build-pipeline \
+--set groupName=acme.youcompany.com \
  cert-manager-webhook-oci deploy/cert-manager-webhook-oci
+```
+
+To use Workload Identity Auth, add the flags
+
+```
+--set useWorkloadIdentity=true \  
+--set region="us-ashburn-1" \ # enter the region where the cluster is deployed
 ```
 
 **Note**: The kubernetes resources used to install the Webhook should be deployed within the same namespace as the cert-manager.
@@ -76,14 +85,23 @@ spec:
     solvers:
       - dns01:
           webhook:
-            groupName: acme.d-n.be
+            groupName: acme.yourcompany.com
             solverName: oci
             config:
               ociProfileSecretName: oci-profile
               compartmentOCID: ocid-of-compartment-to-use
 ```
 
-### Credentials
+### Credentials & Permissions
+
+In order to access the Oracle Cloud Infrastructure API, the webhook needs permissions. This can be achieved through 3 means:
+
+- OCI Profile: requires a User, with an API key, and the corresponding OCI profile. Only the pod with access to the secret with private key and OCI profile has permissions.
+- Instance Principal: The cluster node where the webhook runs needs to be part of a Dynamic Group or Network Source that has the permission to manage DNS features. This means all pods on the node will have those permissions. 
+- Workload Identity: Only the pod with the specified service account & namespace has permission. This option is only available in OKE Enhanced Clusters.
+
+#### Using OCI Profile
+
 In order to access the Oracle Cloud Infrastructure API, the webhook needs an OCI profile configuration.
 
 If you choose another name for the secret than `oci-profile`, ensure you modify the value of `ociProfileSecretName` in the `[Cluster]Issuer`.
@@ -105,6 +123,39 @@ stringData:
     ...KEY DATA HERE...
     -----END RSA PRIVATE KEY-----
   privateKeyPassphrase: "private keys passphrase or empty string if none"
+```
+
+The user needs to belogn to a group that has the following permissions:
+
+```
+use dns-zones in compartment
+manage dns-records in compartment
+```
+
+#### Using Instance Principal (least secure)
+
+- Using Network Source: Limit the scope to a subnet (more secure)
+
+In Identity, Network Source, create a Network Source targetting the VCN where the cluster is deployed, and the CIDR block of the nodepool
+
+Create a Policy reading:
+
+```
+allow any-user to use dns-zones in compartment <compartment-name> where ALL {request.networkSource.name = '<network-source-name>'}
+allow any-user to manage dns-records in compartment <compartment-name> where ALL {request.networkSource.name = '<network-source-name>'}
+```
+
+- Using a Dynamic Group: Limit the scope to a compartment (less secure)
+
+Create 
+
+#### Using Workload Identity (most secure)
+
+Only available on OKE Enhanced Clusters
+
+```
+allow any-user to use dns-zones in compartment <compartment-name> where ALL {request.principal.type='workload', request.principal.namespace ='cert-manager', request.principal.service_account = 'cert-manager-webhook-oci', request.principal.cluster_id = '<oke-cluster-id>'}
+allow any-user to manage dns-record in compartment <compartment-name> where ALL {request.principal.type='workload', request.principal.namespace ='cert-manager', request.principal.service_account = 'cert-manager-webhook-oci', request.principal.cluster_id = '<oke-cluster-id>'}
 ```
 
 ### Create a certificate
@@ -148,3 +199,5 @@ You can then run the test suite with:
 # then run the tests
 TEST_ZONE_NAME=example.com. make verify
 ```
+
+
