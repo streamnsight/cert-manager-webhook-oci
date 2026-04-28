@@ -3,7 +3,7 @@ kind: Secret
 metadata:
   name: oci-profile
 type: Opaque
-data:
+stringData:
   tenancy: "$OCI_TENANCY_OCID"
   user: "$OCI_USER_OCID"
   region: "$OCI_REGION"

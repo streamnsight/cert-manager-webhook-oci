@@ -1,0 +1,6 @@
+.git
+.DS_Store
+kubebuilder
+deploy/v*
+ATTRIBUTION-HELPER-DEPS
+THIRD_PARTY_LICENSES.txt

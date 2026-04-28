@@ -9,7 +9,7 @@ help: ## This help.
 .DEFAULT_GOAL := help
 
 IMAGE_NAME := "cert-manager-webhook-oci"
-IMAGE_TAG := "latest"
+IMAGE_TAG := "ol10-cm1.19.1"
 
 OUT := $(shell pwd)/deploy
 
@@ -17,7 +17,7 @@ $(shell mkdir -p "$(OUT)")
 
 .PHONY: verify
 verify: ## verify the code
-	go test -v .
+	GOTOOLCHAIN=auto go test -v ./...
 
 .PHONY: build
 build: ## build the docker image

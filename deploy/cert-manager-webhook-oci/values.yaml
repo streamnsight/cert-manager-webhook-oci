@@ -11,8 +11,8 @@ certManager:
   serviceAccountName: cert-manager
 
 image:
-  repository: 
-  tag: ol7.9-cm1.6.1
+  repository: your-repo/cert-manager-webhook-oci
+  tag: ol10-cm1.19.1
   pullPolicy: IfNotPresent
 
 nameOverride: ""

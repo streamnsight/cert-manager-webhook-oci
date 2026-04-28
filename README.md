@@ -1,72 +1,75 @@
 # ACME webhook for Oracle Cloud Infrastructure
 
-This solver can be used when you want to use cert-manager with Oracle Cloud Infrastructure as a DNS provider.
+This webhook lets `cert-manager` solve `dns01` challenges using Oracle Cloud Infrastructure DNS.
 
-## Changes from upstream
+## Current target
 
-The [original code](https://gitlab.com/dn13/cert-manager-webhook-oci) is not under active maintenance, these are some minor fixes to make it compatible with recent Kubernetes and Cert Manager:
+- `cert-manager` `1.19.1`
+- Oracle OCI Go SDK `v65.113.0`
+- Kubernetes Go libraries `v0.34.1`
+- Go `1.25`
+- Oracle Linux `10` runtime image
 
-* [Fixes by Tyler Lawson](https://gitlab.com/lawsontyler/cert-manager-webhook-oci) to support newer OCI APIs
-* Fixes to RBAC to support newer versions of Kubernetes
-* GitHub actions to build the container image and Helm repo.
-* Update to v65 OCI SDK, and implement Instance Principal auth
-* Implement Workload Identity auth method for OKE Enhanced clusters
+The solver config schema and Helm values are intentionally unchanged from earlier releases:
 
-## Requirements
-
-- [go](https://golang.org/) >= 1.13.0 *only for development*
-- [helm](https://helm.sh/) >= v3.0.0
-- [kubernetes](https://kubernetes.io/) >= v1.14.0
-- [cert-manager](https://cert-manager.io/) >= 1.0
+- `compartmentOCID`
+- `ociProfileSecretName`
+- `groupName`
+- `certManager.namespace`
+- `certManager.serviceAccountName`
+- `useWorkloadIdentity`
+- `region`
+- `ociProfileSecretNames`
 
 ## Installation
 
-### cert-manager
+Install `cert-manager` separately using its upstream installation documentation.
 
-Follow the [instructions](https://cert-manager.io/docs/installation/) using the cert-manager documentation to install it within your cluster.
+### Helm chart
 
-### Webhook
-
-<!-- #### Using Public Helm Chart
+The chart defaults to the published OCI webhook image:
 
 ```bash
-helm repo add cert-manager-webhook-oci https://streamnsight.github.io/cert-manager-webhook-oci
-helm install --namespace cert-manager cert-manager-webhook-oci cert-manager-webhook-oci/cert-manager-webhook-oci
-``` -->
+helm upgrade --install cert-manager-webhook-oci deploy/cert-manager-webhook-oci \
+  --namespace cert-manager \
+  --create-namespace \
+  --set groupName=acme.yourcompany.com
+```
 
-#### From local checkout
-
-Build and publish the container image to your registry
-
-Install:
+If you build and publish your own image, override the image coordinates:
 
 ```bash
-helm install --namespace cert-manager \
---set image.repository=ghcr.io/giovannicandido/cert-manager-webhook-oci \
---set image.tag=build-pipeline \
---set groupName=acme.youcompany.com \
- cert-manager-webhook-oci deploy/cert-manager-webhook-oci
+helm upgrade --install cert-manager-webhook-oci deploy/cert-manager-webhook-oci \
+  --namespace cert-manager \
+  --create-namespace \
+  --set groupName=acme.yourcompany.com \
+  --set image.repository=ghcr.io/your-org/cert-manager-webhook-oci \
+  --set image.tag=ol10-cm1.19.1
 ```
 
-To use Workload Identity Auth, add the flags
+To enable OKE Workload Identity, add:
 
-```
---set useWorkloadIdentity=true \  
---set region="us-ashburn-1" \ # enter the region where the cluster is deployed
-```
-
-**Note**: The kubernetes resources used to install the Webhook should be deployed within the same namespace as the cert-manager.
-
-To uninstall the webhook run
 ```bash
-helm uninstall --namespace cert-manager cert-manager-webhook-oci
+--set useWorkloadIdentity=true \
+--set region=us-ashburn-1
 ```
 
-## Issuer
+The webhook must be deployed into the same namespace as `cert-manager`.
 
-Create a `ClusterIssuer` or `Issuer` resource as following:
+### Static manifest
+
+A rendered manifest for this target is published under:
+
+```text
+deploy/v1.19.1-1.5.0/cert-manager-webhook-oci.yaml
+```
+
+## Issuer example
+
+Create an `Issuer` or `ClusterIssuer` using the stable `cert-manager.io/v1` API:
+
 ```yaml
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-staging
@@ -89,24 +92,21 @@ spec:
             solverName: oci
             config:
               ociProfileSecretName: oci-profile
-              compartmentOCID: ocid-of-compartment-to-use
+              compartmentOCID: ocid1.compartment.oc1..exampleuniqueID
 ```
 
-### Credentials & Permissions
+## Authentication modes
 
-In order to access the Oracle Cloud Infrastructure API, the webhook needs permissions. This can be achieved through 3 means:
+The webhook supports three OCI authentication modes:
 
-- OCI Profile: requires a User, with an API key, and the corresponding OCI profile. Only the pod with access to the secret with private key and OCI profile has permissions.
-- Instance Principal: The cluster node where the webhook runs needs to be part of a Dynamic Group or Network Source that has the permission to manage DNS features. This means all pods on the node will have those permissions. 
-- Workload Identity: Only the pod with the specified service account & namespace has permission. This option is only available in OKE Enhanced Clusters.
+- OCI profile secret
+- Instance Principal
+- OKE Workload Identity
 
-#### Using OCI Profile
+### OCI profile secret
 
-In order to access the Oracle Cloud Infrastructure API, the webhook needs an OCI profile configuration.
+If you keep the default secret name, create the profile secret as:
 
-If you choose another name for the secret than `oci-profile`, ensure you modify the value of `ociProfileSecretName` in the `[Cluster]Issuer`.
-
-The secret for the example above will look like this:
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -122,12 +122,12 @@ stringData:
     -----BEGIN RSA PRIVATE KEY-----
     ...KEY DATA HERE...
     -----END RSA PRIVATE KEY-----
-  privateKeyPassphrase: "private keys passphrase or empty string if none"
+  privateKeyPassphrase: ""
 ```
 
-The user needs to belogn to a group that has the following permissions:
+The OCI principal needs at least:
 
-```
+```text
 use dns-zones in compartment
 manage dns-records in compartment
 ```
@@ -158,24 +158,22 @@ allow any-user to use dns-zones in compartment <compartment-name> where ALL {req
 allow any-user to manage dns-record in compartment <compartment-name> where ALL {request.principal.type='workload', request.principal.namespace ='cert-manager', request.principal.service_account = 'cert-manager-webhook-oci', request.principal.cluster_id = '<oke-cluster-id>'}
 ```
 
-### Create a certificate
-
-Finally you can create certificates, for example:
+## Certificate example
 
 ```yaml
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: example-cert
   namespace: cert-manager
 spec:
+  secretName: example-cert
   commonName: example.com
   dnsNames:
     - example.com
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer
-  secretName: example-cert
 ```
 
 ## Development
@@ -200,4 +198,11 @@ You can then run the test suite with:
 TEST_ZONE_NAME=example.com. make verify
 ```
 
+`fetch-test-binaries.sh` uses `setup-envtest` and defaults to Kubernetes `1.34.x`. Override that with `K8S_VERSION=<minor-or-patch>` if you need a different supported test control-plane version.
 
+## Upgrade notes
+
+- Issuer and Certificate examples now use `cert-manager.io/v1`.
+- Existing solver config keys and Helm values are unchanged.
+- The default image tag moved from the old OL7 / cert-manager 1.6 line to `ol10-cm1.19.1`.
+- Legacy rendered manifests under `deploy/v1.6.1*` are kept for reference while the new `v1.19.1-1.5.0` manifest becomes the current target.
